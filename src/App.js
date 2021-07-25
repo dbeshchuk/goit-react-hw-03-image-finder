@@ -1,19 +1,15 @@
 import React, { Component } from "react";
-import axios from "axios";
 import Loader from "react-loader-spinner";
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import "./App.css";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import Modal from "./components/Modal";
-import Button from "./components/Button";
-import ImageGallery from "./components/ImageGallery";
-import ImageGalleryItem from "./components/ImageGalleryItem";
-import Searchbar from "./components/Searchbar";
-
-const BASE_URL = "https://pixabay.com/api/";
-const API_KEY = "21932135-4f5d77beca28a3dee23c5711e";
+import Modal from "./components/Modal/Modal";
+import Button from "./components/Button/Button";
+import ImageGallery from "./components/ImageGallery/ImageGallery";
+import Searchbar from "./components/Searchbar/Searchbar";
+import searchApi from "./services/searchApi";
 
 class App extends Component {
   state = {
@@ -44,7 +40,7 @@ class App extends Component {
     }
 
     this.setState({ isLoaderOn: true });
-    await this.searchApi()
+    await searchApi(this.state.searchQuery, this.state.searchPage)
       .then((data) => {
         this.setState({ images: data, searchPage: 1 });
       })
@@ -70,28 +66,15 @@ class App extends Component {
 
     this.setState({ isLoaderOn: true });
 
-    await this.searchApi().then((data) =>
-      this.setState((prevState) => ({
-        images: [...prevState.images, ...data],
-      }))
+    await searchApi(this.state.searchQuery, this.state.searchPage).then(
+      (data) =>
+        this.setState((prevState) => ({
+          images: [...prevState.images, ...data],
+        }))
     );
 
     this.setState({ isLoaderOn: false });
   };
-
-  searchApi() {
-    return axios
-      .get(
-        `${BASE_URL}?image_type=photo&orientation=horizontal&q=${this.state.searchQuery}&page=${this.state.searchPage}&per_page=12&key=${API_KEY}`
-      )
-      .then((response) => {
-        if (response.data.hits.length > 0) {
-          return response.data.hits;
-        }
-
-        return Promise.reject(new Error("No match found"));
-      });
-  }
 
   inputChange = ({ target }) => {
     const { value } = target;
@@ -125,9 +108,7 @@ class App extends Component {
           onChange={this.inputChange}
         />
 
-        <ImageGallery onClick={this.openModal}>
-          <ImageGalleryItem images={this.state.images} />
-        </ImageGallery>
+        <ImageGallery onClick={this.openModal} images={this.state.images} />
 
         {this.state.isLoaderOn && (
           <Loader type="Oval" color="#3f51b5" height={40} width={40} />
